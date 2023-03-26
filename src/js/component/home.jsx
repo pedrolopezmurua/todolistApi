@@ -17,15 +17,15 @@ function Home() {
     if (inputValue !== "") {
       const newTask = {
         label: encodeURI(inputValue),
-		
         done: false,
       };
-      setTasks([...tasks, newTask]);
+      const updatedTasks = [...tasks, newTask];
+      setTasks(updatedTasks);
 
       fetch("https://assets.breatheco.de/apis/fake/todos/user/Pedro", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify([...tasks, newTask]),
+        body: JSON.stringify(updatedTasks),
       })
         .then(() => {
           setInputValue("");
@@ -33,6 +33,7 @@ function Home() {
         .catch((error) => console.log(error));
     }
   }
+  //En el código modificado, se utiliza la variable updatedTasks para construir tanto el estado de tasks actualizado como el cuerpo de la solicitud PUT. Luego, el estado de tasks se actualiza con la nueva tarea después de que la solicitud PUT es exitosa.
 
   function handleChange(event) {
     setInputValue(event.target.value);
@@ -40,14 +41,18 @@ function Home() {
 
   function handleDelete(label) {
     const updatedTasks = tasks.filter((task) => task.label !== label);
+    const deletedTask = tasks.find((task) => task.label === label);
+    if (!deletedTask) return; // Si la tarea no existe, no hagas nada
     setTasks(updatedTasks);
-
+  
     fetch(`https://assets.breatheco.de/apis/fake/todos/user/Pedro`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(updatedTasks.map(task => ({...task, done: true}))),
+      body: JSON.stringify(
+        [...updatedTasks, { ...deletedTask, done: true }]
+      ),
     })
-      .catch((error) => console.log(error));
+    .catch((error) => console.log(error));
   }
 
   return (
@@ -67,7 +72,9 @@ function Home() {
           !task.done ? (
             <li key={`${task.label}-${task.done}`}>
               <p>{decodeURI(task.label)}</p>
-              <button type="button" onClick={() => handleDelete(task.label)}>Eliminar</button>
+              <button type="button" onClick={() => handleDelete(task.label)}>
+                Eliminar
+              </button>
             </li>
           ) : null
         )}
