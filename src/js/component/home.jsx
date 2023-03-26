@@ -16,11 +16,11 @@ function Home() {
 
     if (inputValue !== "") {
       const newTask = {
-        id: Date.now(),
         label: encodeURI(inputValue),
+		
         done: false,
       };
-      setTasks([...tasks, newTask]); 
+      setTasks([...tasks, newTask]);
 
       fetch("https://assets.breatheco.de/apis/fake/todos/user/Pedro", {
         method: "PUT",
@@ -35,36 +35,25 @@ function Home() {
   }
 
   function handleChange(event) {
-    setInputValue(escape(event.target.value));
+    setInputValue(event.target.value);
   }
 
-  function handleDelete(id) {
-    const taskToDelete = tasks.find((task) => task.id === id);
-    if (taskToDelete.done) {
-      fetch(`https://assets.breatheco.de/apis/fake/todos/user/Pedro`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(tasks.filter((task) => task.id !== id)),
-      })
-        .then(() => setTasks(tasks.filter((task) => task.id !== id)))
-        .catch((error) => console.log(error));
-    } else {
-      const updatedTasks = tasks.map((task) =>
-        task.id === id ? { ...task, done: true } : task
-      );
-      setTasks(updatedTasks);
-      fetch(`https://assets.breatheco.de/apis/fake/todos/user/Pedro`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedTasks),
-      }).catch((error) => console.log(error));
-    }
+  function handleDelete(label) {
+    const updatedTasks = tasks.filter((task) => task.label !== label);
+    setTasks(updatedTasks);
+
+    fetch(`https://assets.breatheco.de/apis/fake/todos/user/Pedro`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(updatedTasks.map(task => ({...task, done: true}))),
+    })
+      .catch((error) => console.log(error));
   }
 
   return (
     <div className="container">
       <h1>To Do List</h1>
-      <form onSubmit={handleSubmit} className="form">
+      <form onSubmit={handleSubmit} className="form" autoComplete="off">
         <input
           type="text"
           placeholder="Ingrese una nueva tarea..."
@@ -76,9 +65,9 @@ function Home() {
       <ul>
         {tasks.map((task) =>
           !task.done ? (
-            <li key={task.id}>
-              <p>{task.label}</p>
-              <button onClick={() => handleDelete(task.id)}>Eliminar</button>
+            <li key={`${task.label}-${task.done}`}>
+              <p>{decodeURI(task.label)}</p>
+              <button type="button" onClick={() => handleDelete(task.label)}>Eliminar</button>
             </li>
           ) : null
         )}
